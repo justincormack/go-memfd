@@ -1,6 +1,7 @@
 ## Go Memfd library
 
 [![GoDoc](https://godoc.org/github.com/justincormack/go-memfd?status.svg)](https://godoc.org/github.com/justincormack/go-memfd)
+[![Build Status](https://travis-ci.org/justincormack/go-memfd.svg?branch=master)](https://travis-ci.org/justincormack/go-memfd)
 
 This is a Go library for working with Linux memfd, memory file descriptors.
 
