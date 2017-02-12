@@ -16,4 +16,5 @@ and the file sealing section of [`fcntl`](http://man7.org/linux/man-pages/man2/f
 so the details are not quite correct for the final version.
 
 The functionality was added in Linux 3.17, in February 2015. This means it is not supported in Debian Jessie, but it is in the
-Ubuntu 14.04 updates, and will be in Debian Stretch.
+Ubuntu 14.04 updates, and will be in Debian Stretch. Currently there is no support in the BSDs, I hope this can be added as it
+is a useful interface.
