@@ -115,9 +115,9 @@ func TestMap(t *testing.T) {
 	if n != len(text) {
 		t.Errorf("Short write")
 	}
-	b, err := mfd.MapRW()
+	b, err := mfd.Map()
 	if err != nil {
-		t.Errorf("MapRW error: %v", err)
+		t.Errorf("Map read write error: %v", err)
 	}
 	if string(b) != text {
 		t.Errorf("Did not read previous write: %s", string(b))
@@ -134,7 +134,15 @@ func TestMap(t *testing.T) {
 	if err != nil {
 		t.Errorf("SetImmutable failed: %v", err)
 	}
+	b, err = mfd.Map()
+	if err != nil {
+		t.Errorf("Map read only error: %v", err)
+	}
 	mfd.Close()
+	err = mfd.Unmap()
+	if err != nil {
+		t.Errorf("Unmap error: %v", err)
+	}
 }
 
 func TestNewMemfd(t *testing.T) {
