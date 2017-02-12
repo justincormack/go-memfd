@@ -8,6 +8,7 @@ import (
 	"unsafe"
 )
 
+// Linux kernel constants
 const (
 	MFD_CLOEXEC       uint = 1
 	MFD_ALLOW_SEALING uint = 2

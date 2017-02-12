@@ -10,6 +10,13 @@ import (
 	"syscall"
 )
 
+var (
+	// ErrTooBig is returned if you try to map a memfd over 2GB, due to current Go limitations
+	ErrTooBig = errors.New("memfd too large for slice")
+	// ErrAlreadyMapped is returned if you try to map a writeable memfd more than once
+	ErrAlreadyMapped = errors.New("memfd already mapped")
+)
+
 // Memfd is the type for an memory fd, an os.File with extra methods
 type Memfd struct {
 	*os.File
@@ -95,9 +102,13 @@ func (memfd *Memfd) Size() int64 {
 	return fi.Size()
 }
 
-const maxint int64 = int64(^uint(0) >> 1)
+// SetSize sets the size of the memfd. It is just
+// Truncate but a more understandable name.
+func (memfd *Memfd) SetSize(size int64) error {
+	return memfd.Truncate(size)
+}
 
-var errTooBig = errors.New("memfd too large for slice")
+const maxint int64 = int64(^uint(0) >> 1)
 
 // MapImmutable makes sure the memfd is immutable and returns a byte slice
 // with the contents in. You will not be able to modify this.
@@ -114,13 +125,11 @@ func (memfd *Memfd) MapImmutable() ([]byte, error) {
 	}
 	size := memfd.Size()
 	if size > maxint {
-		return []byte{}, errTooBig
+		return []byte{}, ErrTooBig
 	}
 	memfd.b, err = syscall.Mmap(int(memfd.Fd()), 0, int(size), syscall.PROT_READ, syscall.MAP_PRIVATE)
 	return memfd.b, err
 }
-
-var errAlreadyMapped = errors.New("memfd already mapped")
 
 // MapRW returns a read write byte slice from mmaping the underlying memfd.
 // You need to specify a capacity; currently as there is no remap support you
@@ -129,15 +138,13 @@ var errAlreadyMapped = errors.New("memfd already mapped")
 // Go does not allow slices over 2GB at present.
 // Sealing will fail while a writeable mapping exists, it must be unmapped first.
 // Mapping multiple times returns an error
-func (memfd *Memfd) MapRW(size int64) ([]byte, error) {
+func (memfd *Memfd) MapRW() ([]byte, error) {
 	if cap(memfd.b) != 0 {
-		return []byte{}, errAlreadyMapped
+		return []byte{}, ErrAlreadyMapped
 	}
+	size := memfd.Size()
 	if size > maxint {
-		return []byte{}, errTooBig
-	}
-	if size == 0 {
-		size = memfd.Size()
+		return []byte{}, ErrTooBig
 	}
 	var err error
 	memfd.b, err = syscall.Mmap(int(memfd.Fd()), 0, int(size), syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)

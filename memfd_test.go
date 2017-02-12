@@ -54,34 +54,34 @@ func TestSealing(t *testing.T) {
 	mfd.Close()
 }
 
-func TestTruncate(t *testing.T) {
+func TestResize(t *testing.T) {
 	mfd, err := Create("test")
 	if err != nil {
 		t.Errorf("Create failed: %v", err)
 	}
-	err = mfd.Truncate(1024)
+	err = mfd.SetSize(1024)
 	if err != nil {
-		t.Errorf("Truncate failed: %v", err)
+		t.Errorf("Grow failed: %v", err)
 	}
 	err = mfd.SetSeals(F_SEAL_SHRINK)
 	if err != nil {
 		t.Errorf("SetSeals failed: %v", err)
 	}
-	err = mfd.Truncate(2048)
+	err = mfd.SetSize(2048)
 	if err != nil {
-		t.Errorf("Truncate failed: %v", err)
+		t.Errorf("Grow failed: %v", err)
 	}
-	err = mfd.Truncate(0)
+	err = mfd.SetSize(0)
 	if err == nil {
-		t.Errorf("Truncate succeeded after seal")
+		t.Errorf("Shrink succeeded after seal")
 	}
 	err = mfd.SetSeals(F_SEAL_GROW)
 	if err != nil {
 		t.Errorf("SetSeals failed: %v", err)
 	}
-	err = mfd.Truncate(4096)
+	err = mfd.SetSize(4096)
 	if err == nil {
-		t.Errorf("Truncate succeeded after seal")
+		t.Errorf("Grow succeeded after seal")
 	}
 	mfd.Close()
 }
@@ -95,9 +95,9 @@ func TestImmutable(t *testing.T) {
 	if err != nil {
 		t.Errorf("SetImmutable failed: %v", err)
 	}
-	err = mfd.Truncate(1024)
+	err = mfd.SetSize(1024)
 	if err == nil {
-		t.Errorf("Truncate succeeded after seal")
+		t.Errorf("Resize succeeded after seal")
 	}
 	mfd.Close()
 }
@@ -115,7 +115,7 @@ func TestMap(t *testing.T) {
 	if n != len(text) {
 		t.Errorf("Short write")
 	}
-	b, err := mfd.MapRW(0)
+	b, err := mfd.MapRW()
 	if err != nil {
 		t.Errorf("MapRW error: %v", err)
 	}
