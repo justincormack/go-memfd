@@ -26,6 +26,7 @@ func TestSealing(t *testing.T) {
 	if err != nil {
 		t.Errorf("Create failed: %v", err)
 	}
+	defer mfd.Close()
 	seals := mfd.Seals()
 	if seals != 0 {
 		t.Errorf("Expected no seals initially, got %d", seals)
@@ -51,7 +52,6 @@ func TestSealing(t *testing.T) {
 	if !mfd.IsImmutable() {
 		t.Errorf("Expected fully immutable after setting immutable")
 	}
-	mfd.Close()
 }
 
 func TestResize(t *testing.T) {
@@ -59,6 +59,7 @@ func TestResize(t *testing.T) {
 	if err != nil {
 		t.Errorf("Create failed: %v", err)
 	}
+	defer mfd.Close()
 	err = mfd.SetSize(1024)
 	if err != nil {
 		t.Errorf("Grow failed: %v", err)
@@ -83,7 +84,6 @@ func TestResize(t *testing.T) {
 	if err == nil {
 		t.Errorf("Grow succeeded after seal")
 	}
-	mfd.Close()
 }
 
 func TestImmutable(t *testing.T) {
@@ -91,6 +91,7 @@ func TestImmutable(t *testing.T) {
 	if err != nil {
 		t.Errorf("Create failed: %v", err)
 	}
+	defer mfd.Close()
 	err = mfd.SetImmutable()
 	if err != nil {
 		t.Errorf("SetImmutable failed: %v", err)
@@ -99,7 +100,6 @@ func TestImmutable(t *testing.T) {
 	if err == nil {
 		t.Errorf("Resize succeeded after seal")
 	}
-	mfd.Close()
 }
 
 func TestMap(t *testing.T) {
@@ -107,6 +107,7 @@ func TestMap(t *testing.T) {
 	if err != nil {
 		t.Errorf("Create failed: %v", err)
 	}
+	defer mfd.Close()
 	text := "Putting something in the memfd"
 	n, err := mfd.WriteString(text)
 	if err != nil {
@@ -138,7 +139,6 @@ func TestMap(t *testing.T) {
 	if err != nil {
 		t.Errorf("Map read only error: %v", err)
 	}
-	mfd.Close()
 	err = mfd.Unmap()
 	if err != nil {
 		t.Errorf("Unmap error: %v", err)
