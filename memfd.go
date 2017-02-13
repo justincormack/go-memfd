@@ -8,11 +8,31 @@ import (
 	"errors"
 	"os"
 	"syscall"
+
+	"github.com/justincormack/go-memfd/msyscall"
 )
 
 var (
 	// ErrTooBig is returned if you try to map a memfd over 2GB on a 32 bit platform
 	ErrTooBig = errors.New("memfd too large for slice")
+)
+
+const (
+	// Cloexec sets the cloexec flag on the memfd when opened
+	Cloexec      = msyscall.MFD_CLOEXEC
+	// AllowSealing allows seal operations to be performed
+	AllowSealing = msyscall.MFD_ALLOW_SEALING
+
+	// SealSeal means no more seal operations can be performed
+	SealSeal   = msyscall.F_SEAL_SEAL
+	// SealShrink means the memfd may no longer shrink
+	SealShrink = msyscall.F_SEAL_SHRINK
+	// SealGrow means the memfd may no longer grow
+	SealGrow   = msyscall.F_SEAL_GROW
+	// SealWrite means the memfd may no longer be written to
+	SealWrite  = msyscall.F_SEAL_WRITE
+	// SealAll means the memfd is now immutable
+	SealAll    = SealSeal | SealShrink | SealGrow | SealWrite
 )
 
 // Memfd is the type for an memory fd, an os.File with extra methods
@@ -21,16 +41,16 @@ type Memfd struct {
 	b []byte
 }
 
-// Create exposes the high level interface to memfd. It sets the flags to the
-// options that you probably want. Name can be empty, it is just for reference.
+// Create creates a memfd and sets the flags to the most common options, Cloexec and AllowSealing.
+// Name can be empty, it is just for reference.
 func Create(name string) (*Memfd, error) {
-	return CreateFlags(name, MFD_CLOEXEC|MFD_ALLOW_SEALING)
+	return CreateFlags(name, Cloexec|AllowSealing)
 }
 
-// CreateFlags exposes the high level interface to memfd, and allows setting
-// flags if required. Name can be empty, it is just for reference.
+// CreateFlags creates a memfd, and allows setting flags if required.
+// Name can be empty, it is just for reference.
 func CreateFlags(name string, flags uint) (*Memfd, error) {
-	fd, err := SyscallMemfdCreate(name, flags)
+	fd, err := msyscall.MemfdCreate(name, flags)
 	if err != nil {
 		return nil, err
 	}
@@ -38,11 +58,10 @@ func CreateFlags(name string, flags uint) (*Memfd, error) {
 	return &memfd, nil
 }
 
-// NewMemfd creates a high level memfd object from a file descriptor, eg
-// passed via a pipe or to an exec. Will return an error if the file was
-// not a memfd, ie cannot have seals.
+// NewMemfd creates a memfd object from a file descriptor, eg passed via a pipe or to an exec.
+// Will return an error if the file was not a memfd, ie cannot have seals.
 func NewMemfd(fd uintptr) (*Memfd, error) {
-	_, err := SyscallFcntlSeals(fd)
+	_, err := msyscall.FcntlSeals(fd)
 	if err != nil {
 		return nil, err
 	}
@@ -51,9 +70,8 @@ func NewMemfd(fd uintptr) (*Memfd, error) {
 	return &mfd, nil
 }
 
-// Size returns the current size of the memfd
-// It could return an error if the memfd is closed, so
-// we return zero in that case.
+// Size returns the current size of the memfd.
+// It could return an error if the memfd is closed; we return zero in that case.
 func (mfd *Memfd) Size() int64 {
 	fi, err := mfd.Stat()
 	if err != nil {
@@ -62,15 +80,14 @@ func (mfd *Memfd) Size() int64 {
 	return fi.Size()
 }
 
-// SetSize sets the size of the memfd. It is just
-// Truncate but a more understandable name.
+// SetSize sets the size of the memfd. It is just Truncate but a more understandable name.
 func (mfd *Memfd) SetSize(size int64) error {
 	return mfd.Truncate(size)
 }
 
 // seals is an internal function that returns seals or an error
 func (mfd *Memfd) seals() (int, error) {
-	return SyscallFcntlSeals(mfd.Fd())
+	return msyscall.FcntlSeals(mfd.Fd())
 }
 
 // Seals returns the current seals. It can only error if something
@@ -86,21 +103,21 @@ func (mfd *Memfd) Seals() int {
 
 // SetSeals sets the current seals. It can error if the item is sealed.
 func (mfd *Memfd) SetSeals(seals int) error {
-	return SyscallFcntlSetSeals(mfd.Fd(), seals)
+	return msyscall.FcntlSetSeals(mfd.Fd(), seals)
 }
 
 // IsImmutable returns true if the memfd is fully immutable, all seals set
 func (mfd *Memfd) IsImmutable() bool {
-	seals, err := SyscallFcntlSeals(mfd.Fd())
+	seals, err := msyscall.FcntlSeals(mfd.Fd())
 	if err != nil {
 		return false
 	}
-	return seals == ALL_SEALS
+	return seals == SealAll
 }
 
 // SetImmutable fully seals the memfd if it is not already.
 func (mfd *Memfd) SetImmutable() error {
-	err := mfd.SetSeals(ALL_SEALS)
+	err := mfd.SetSeals(SealAll)
 	if err == nil {
 		return nil
 	}
@@ -125,7 +142,7 @@ func (mfd *Memfd) Map() ([]byte, error) {
 	}
 	prot := syscall.PROT_READ | syscall.PROT_WRITE
 	flags := syscall.MAP_SHARED
-	if seals&F_SEAL_WRITE == F_SEAL_WRITE {
+	if seals&SealWrite == SealWrite {
 		prot = syscall.PROT_READ
 		flags = syscall.MAP_PRIVATE
 	}

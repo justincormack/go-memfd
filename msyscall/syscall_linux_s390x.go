@@ -1,4 +1,4 @@
-package memfd
+package msyscall
 
 import "syscall"
 

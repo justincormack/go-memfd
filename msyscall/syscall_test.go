@@ -1,4 +1,4 @@
-package memfd
+package msyscall
 
 import (
 	"os"
@@ -7,29 +7,29 @@ import (
 )
 
 func TestSyscalls(t *testing.T) {
-	fd, err := SyscallMemfdCreate("test", MFD_CLOEXEC|MFD_ALLOW_SEALING)
+	fd, err := MemfdCreate("test", MFD_CLOEXEC|MFD_ALLOW_SEALING)
 	if err != nil {
-		t.Errorf("SyscallMemfdCreate failed: %v", err)
+		t.Errorf("MemfdCreate failed: %v", err)
 	}
-	seals, err := SyscallFcntlSeals(fd)
+	defer syscall.Close(int(fd))
+	seals, err := FcntlSeals(fd)
 	if err != nil {
-		t.Errorf("SyscallFcntlSeals failed: %v", err)
+		t.Errorf("FcntlSeals failed: %v", err)
 	}
 	if seals != 0 {
 		t.Errorf("Expected no seals initially, got %d", seals)
 	}
-	err = SyscallFcntlSetSeals(fd, F_SEAL_SHRINK)
+	err = FcntlSetSeals(fd, F_SEAL_SHRINK)
 	if err != nil {
-		t.Errorf("SyscallFcntlSetSeals failed: %v", err)
+		t.Errorf("FcntlSetSeals failed: %v", err)
 	}
-	seals, err = SyscallFcntlSeals(fd)
+	seals, err = FcntlSeals(fd)
 	if err != nil {
-		t.Errorf("SyscallFcntlSeals failed: %v", err)
+		t.Errorf("FcntlSeals failed: %v", err)
 	}
 	if seals != F_SEAL_SHRINK {
 		t.Errorf("Expected shrink seal, got %d", seals)
 	}
-	syscall.Close(int(fd))
 }
 
 func TestNotMemfdGetSeals(t *testing.T) {
@@ -37,8 +37,9 @@ func TestNotMemfdGetSeals(t *testing.T) {
 	if err != nil {
 		t.Errorf("Cannot open /dev/null")
 	}
+	defer file.Close()
 	fd := file.Fd()
-	_, err = SyscallFcntlSeals(fd)
+	_, err = FcntlSeals(fd)
 	if err == nil {
 		t.Errorf("Expected an error getting seals from /dev/null")
 	}

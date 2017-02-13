@@ -14,7 +14,7 @@ func TestCreate(t *testing.T) {
 }
 
 func TestCreateFlags(t *testing.T) {
-	mfd, err := CreateFlags("test", MFD_CLOEXEC)
+	mfd, err := CreateFlags("test", Cloexec)
 	if err != nil {
 		t.Errorf("CreateFlags failed: %v", err)
 	}
@@ -34,12 +34,12 @@ func TestSealing(t *testing.T) {
 	if mfd.IsImmutable() {
 		t.Errorf("Expected not fully sealed initially")
 	}
-	err = mfd.SetSeals(F_SEAL_WRITE)
+	err = mfd.SetSeals(SealWrite)
 	if err != nil {
 		t.Errorf("SetSeals failed: %v", err)
 	}
 	seals = mfd.Seals()
-	if seals != F_SEAL_WRITE {
+	if seals != SealWrite {
 		t.Errorf("Expected write seal, got %d", seals)
 	}
 	if mfd.IsImmutable() {
@@ -51,6 +51,10 @@ func TestSealing(t *testing.T) {
 	}
 	if !mfd.IsImmutable() {
 		t.Errorf("Expected fully immutable after setting immutable")
+	}
+	seals = mfd.Seals()
+	if seals != SealAll {
+		t.Errorf("Expected all seals set after setting immutable: got %d", seals)
 	}
 }
 
@@ -64,7 +68,7 @@ func TestResize(t *testing.T) {
 	if err != nil {
 		t.Errorf("Grow failed: %v", err)
 	}
-	err = mfd.SetSeals(F_SEAL_SHRINK)
+	err = mfd.SetSeals(SealShrink)
 	if err != nil {
 		t.Errorf("SetSeals failed: %v", err)
 	}
@@ -76,7 +80,7 @@ func TestResize(t *testing.T) {
 	if err == nil {
 		t.Errorf("Shrink succeeded after seal")
 	}
-	err = mfd.SetSeals(F_SEAL_GROW)
+	err = mfd.SetSeals(SealGrow)
 	if err != nil {
 		t.Errorf("SetSeals failed: %v", err)
 	}
@@ -146,10 +150,12 @@ func TestMap(t *testing.T) {
 }
 
 func TestNewMemfd(t *testing.T) {
-	fd, err := SyscallMemfdCreate("test", MFD_CLOEXEC|MFD_ALLOW_SEALING)
+	mfd0, err := Create("test")
 	if err != nil {
-		t.Errorf("SyscallMemfdCreate failed: %v", err)
+		t.Errorf("Create failed: %v", err)
 	}
+	defer mfd0.Close()
+	fd := mfd0.Fd()
 	mfd, err := NewMemfd(uintptr(fd))
 	if err != nil {
 		t.Errorf("NewMemfd failed: %v", err)
