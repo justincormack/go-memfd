@@ -19,20 +19,20 @@ var (
 
 const (
 	// Cloexec sets the cloexec flag on the memfd when opened
-	Cloexec      = msyscall.MFD_CLOEXEC
+	Cloexec = msyscall.MFD_CLOEXEC
 	// AllowSealing allows seal operations to be performed
 	AllowSealing = msyscall.MFD_ALLOW_SEALING
 
 	// SealSeal means no more seal operations can be performed
-	SealSeal   = msyscall.F_SEAL_SEAL
+	SealSeal = msyscall.F_SEAL_SEAL
 	// SealShrink means the memfd may no longer shrink
 	SealShrink = msyscall.F_SEAL_SHRINK
 	// SealGrow means the memfd may no longer grow
-	SealGrow   = msyscall.F_SEAL_GROW
+	SealGrow = msyscall.F_SEAL_GROW
 	// SealWrite means the memfd may no longer be written to
-	SealWrite  = msyscall.F_SEAL_WRITE
+	SealWrite = msyscall.F_SEAL_WRITE
 	// SealAll means the memfd is now immutable
-	SealAll    = SealSeal | SealShrink | SealGrow | SealWrite
+	SealAll = SealSeal | SealShrink | SealGrow | SealWrite
 )
 
 // Memfd is the type for an memory fd, an os.File with extra methods
@@ -135,20 +135,29 @@ const maxint int64 = int64(^uint(0) >> 1)
 // seal, and a shared writeable mapping if it is not sealed.
 // The slice must be under 2GB on a 32 bit platform.
 // Writeable mappings must be unmapped before sealing.
+// Multiple requests return the same slice.
 func (mfd *Memfd) Map() ([]byte, error) {
+	if cap(mfd.b) > 0 {
+		return mfd.b, nil
+	}
 	seals, err := mfd.seals()
 	if err != nil {
 		return []byte{}, err
 	}
-	prot := syscall.PROT_READ | syscall.PROT_WRITE
-	flags := syscall.MAP_SHARED
+	var prot, flags int
 	if seals&SealWrite == SealWrite {
 		prot = syscall.PROT_READ
 		flags = syscall.MAP_PRIVATE
+	} else {
+		prot = syscall.PROT_READ | syscall.PROT_WRITE
+		flags = syscall.MAP_SHARED
 	}
 	size := mfd.Size()
 	if size > maxint {
 		return []byte{}, ErrTooBig
+	}
+	if size == 0 {
+		return []byte{}, nil
 	}
 	b, err := syscall.Mmap(int(mfd.Fd()), 0, int(size), prot, flags)
 	if err != nil {
@@ -158,9 +167,23 @@ func (mfd *Memfd) Map() ([]byte, error) {
 	return b, nil
 }
 
-// Unmap clears a mapping. Note that Close does not Unmap, it is fine to use the mapping after close.
+// Unmap clears a mapping. Note that Close does not Unmap, it is fine to use the mapping after close,
+// so you should usually defer Close and defer Unmap to avoid leaking resources.
 func (mfd *Memfd) Unmap() error {
 	err := syscall.Munmap(mfd.b)
 	mfd.b = []byte{}
 	return err
+}
+
+// Remap adjusts the mapping to the current size of the memfd. It may be a new slice.
+// Implementation is currently inefficient, will rework to use mremap syscall if this is useful.
+func (mfd *Memfd) Remap() ([]byte, error) {
+	if cap(mfd.b) == 0 {
+		return mfd.Map()
+	}
+	err := mfd.Unmap()
+	if err != nil {
+		return []byte{}, err
+	}
+	return mfd.Map()
 }

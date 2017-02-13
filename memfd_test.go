@@ -149,6 +149,67 @@ func TestMap(t *testing.T) {
 	}
 }
 
+func TestMapZero(t *testing.T) {
+	mfd, err := Create("test")
+	if err != nil {
+		t.Errorf("Create failed: %v", err)
+	}
+	defer mfd.Close()
+	b, err := mfd.Map()
+	if err != nil {
+		t.Errorf("Map error: %v", err)
+	}
+	if cap(b) != 0 {
+		t.Errorf("Expected zero capacity map, got %d", cap(b))
+	}
+	if len(b) != 0 {
+		t.Errorf("Expected zero length map, got %d", len(b))
+	}
+}
+
+func TestRemap(t *testing.T) {
+	mfd, err := Create("test")
+	if err != nil {
+		t.Errorf("Create failed: %v", err)
+	}
+	defer mfd.Close()
+	err = mfd.SetSize(100)
+	if err != nil {
+		t.Errorf("Resize failed: %v", err)
+	}
+	b, err := mfd.Map()
+	if err != nil {
+		t.Errorf("Map error: %v", err)
+	}
+	if cap(b) != 100 {
+		t.Errorf("Expected 100 capacity map, got %d", cap(b))
+	}
+	if len(b) != 100 {
+		t.Errorf("Expected 100 length map, got %d", len(b))
+	}
+	mfd.SetSize(200)
+	if cap(b) != 100 {
+		t.Errorf("Expected 100 capacity map, got %d", cap(b))
+	}
+	if len(b) != 100 {
+		t.Errorf("Expected 100 length map, got %d", len(b))
+	}
+	b, err = mfd.Remap()
+	if err != nil {
+		t.Errorf("Remap error: %v", err)
+	}
+	if cap(b) != 200 {
+		t.Errorf("Expected 200 capacity map, got %d", cap(b))
+	}
+	if len(b) != 200 {
+		t.Errorf("Expected 200 length map, got %d", len(b))
+	}
+	err = mfd.Unmap()
+	if err != nil {
+		t.Errorf("Unmap error: %v", err)
+	}
+}
+
 func TestNewMemfd(t *testing.T) {
 	mfd0, err := Create("test")
 	if err != nil {
