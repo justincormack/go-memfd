@@ -15,6 +15,9 @@ and the file sealing section of [`fcntl`](http://man7.org/linux/man-pages/man2/f
 [sealed files overview](https://lwn.net/Articles/593918/) from LWN, but written slightly before the final design was merged,
 so the details are not quite correct for the final version.
 
-The functionality was added in Linux 3.17, in February 2015. This means it is not supported in Debian Jessie, but it is in the
-Ubuntu 14.04 updates, and will be in Debian Stretch. Currently there is no support in the BSDs, I hope this can be added as it
-is a useful interface.
+The functionality was added in Linux 3.17, in February 2015. It was also added to the Debian Jessie 3.16 kernels, and is in the
+Ubuntu 14.04 updates, as well as being backported to the Centos 7.3/RHEL 7.3 series, so it is available in all non ancient Linux
+distros, so should be generally usable.. Currently there is no support in the BSDs or other non Linux systems, I hope this can
+be added as it is a useful interface.
+
+A Capnproto Arena library is also included, for sending structured data between processes.
