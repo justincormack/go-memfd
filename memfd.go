@@ -57,9 +57,9 @@ func CreateNameFlags(name string, flags uint) (*Memfd, error) {
 	return &memfd, nil
 }
 
-// NewMemfd creates a memfd object from a file descriptor, eg passed via a pipe or to an exec.
+// New creates a memfd object from a file descriptor, eg passed via a pipe or to an exec.
 // Will return an error if the file was not a memfd, ie cannot have seals.
-func NewMemfd(fd uintptr) (*Memfd, error) {
+func New(fd uintptr) (*Memfd, error) {
 	_, err := msyscall.FcntlSeals(fd)
 	if err != nil {
 		return nil, err

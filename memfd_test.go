@@ -214,16 +214,16 @@ func TestRemap(t *testing.T) {
 	}
 }
 
-func TestNewMemfd(t *testing.T) {
+func TestNew(t *testing.T) {
 	mfd0, err := Create()
 	if err != nil {
 		t.Errorf("Create failed: %v", err)
 	}
 	defer mfd0.Close()
 	fd := mfd0.Fd()
-	mfd, err := NewMemfd(uintptr(fd))
+	mfd, err := New(uintptr(fd))
 	if err != nil {
-		t.Errorf("NewMemfd failed: %v", err)
+		t.Errorf("New failed: %v", err)
 	}
 	mfd.Close()
 }
@@ -234,8 +234,8 @@ func TestNotMemfdNewMemfd(t *testing.T) {
 		t.Errorf("Cannot open /dev/null")
 	}
 	fd := file.Fd()
-	_, err = NewMemfd(fd)
+	_, err = New(fd)
 	if err == nil {
-		t.Errorf("Expected an error calling NewMemfd with /dev/null")
+		t.Errorf("Expected an error calling New with /dev/null")
 	}
 }
