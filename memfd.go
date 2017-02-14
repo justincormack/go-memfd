@@ -42,14 +42,13 @@ type Memfd struct {
 }
 
 // Create creates a memfd and sets the flags to the most common options, Cloexec and AllowSealing.
-// Name can be empty, it is just for reference.
-func Create(name string) (*Memfd, error) {
-	return CreateFlags(name, Cloexec|AllowSealing)
+func Create() (*Memfd, error) {
+	return CreateNameFlags("", Cloexec|AllowSealing)
 }
 
-// CreateFlags creates a memfd, and allows setting flags if required.
-// Name can be empty, it is just for reference.
-func CreateFlags(name string, flags uint) (*Memfd, error) {
+// CreateNameFlags creates a memfd, and allows setting name and flags if required.
+// Name is not required; it is recorded as the symlink name in /proc/self/fd.
+func CreateNameFlags(name string, flags uint) (*Memfd, error) {
 	fd, err := msyscall.MemfdCreate(name, flags)
 	if err != nil {
 		return nil, err
@@ -83,6 +82,13 @@ func (mfd *Memfd) Size() int64 {
 // SetSize sets the size of the memfd. It is just Truncate but a more understandable name.
 func (mfd *Memfd) SetSize(size int64) error {
 	return mfd.Truncate(size)
+}
+
+// ClearCloexec clears the (default) Cloexec flag. Useful just before you exec another process
+// if you are not using the Go fork exec which can set this.
+// While this can fail in theory, it only will if the file is closed, so we ignore error.
+func (mfd *Memfd) ClearCloexec() {
+	_ = msyscall.FcntlClearCloexec(mfd.Fd())
 }
 
 // seals is an internal function that returns seals or an error

@@ -32,6 +32,18 @@ func TestSyscalls(t *testing.T) {
 	}
 }
 
+func TestCloexec(t *testing.T) {
+	fd, err := MemfdCreate("test", MFD_CLOEXEC|MFD_ALLOW_SEALING)
+	if err != nil {
+		t.Errorf("MemfdCreate failed: %v", err)
+	}
+	defer syscall.Close(int(fd))
+	err = FcntlClearCloexec(fd)
+	if err != nil {
+		t.Errorf("FcntlClearCloexec failed: %v", err)
+	}
+}
+
 func TestNotMemfdGetSeals(t *testing.T) {
 	file, err := os.Open("/dev/null")
 	if err != nil {

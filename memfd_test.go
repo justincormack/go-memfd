@@ -6,7 +6,7 @@ import (
 )
 
 func TestCreate(t *testing.T) {
-	mfd, err := Create("test")
+	mfd, err := Create()
 	if err != nil {
 		t.Errorf("Create failed: %v", err)
 	}
@@ -14,7 +14,7 @@ func TestCreate(t *testing.T) {
 }
 
 func TestCreateFlags(t *testing.T) {
-	mfd, err := CreateFlags("test", Cloexec)
+	mfd, err := CreateNameFlags("test", Cloexec)
 	if err != nil {
 		t.Errorf("CreateFlags failed: %v", err)
 	}
@@ -22,7 +22,7 @@ func TestCreateFlags(t *testing.T) {
 }
 
 func TestSealing(t *testing.T) {
-	mfd, err := Create("test")
+	mfd, err := Create()
 	if err != nil {
 		t.Errorf("Create failed: %v", err)
 	}
@@ -59,7 +59,7 @@ func TestSealing(t *testing.T) {
 }
 
 func TestResize(t *testing.T) {
-	mfd, err := Create("test")
+	mfd, err := Create()
 	if err != nil {
 		t.Errorf("Create failed: %v", err)
 	}
@@ -91,7 +91,7 @@ func TestResize(t *testing.T) {
 }
 
 func TestImmutable(t *testing.T) {
-	mfd, err := Create("test")
+	mfd, err := Create()
 	if err != nil {
 		t.Errorf("Create failed: %v", err)
 	}
@@ -107,7 +107,7 @@ func TestImmutable(t *testing.T) {
 }
 
 func TestMap(t *testing.T) {
-	mfd, err := Create("test")
+	mfd, err := Create()
 	if err != nil {
 		t.Errorf("Create failed: %v", err)
 	}
@@ -150,7 +150,7 @@ func TestMap(t *testing.T) {
 }
 
 func TestMapZero(t *testing.T) {
-	mfd, err := Create("test")
+	mfd, err := Create()
 	if err != nil {
 		t.Errorf("Create failed: %v", err)
 	}
@@ -172,7 +172,7 @@ func TestMapZero(t *testing.T) {
 }
 
 func TestRemap(t *testing.T) {
-	mfd, err := Create("test")
+	mfd, err := Create()
 	if err != nil {
 		t.Errorf("Create failed: %v", err)
 	}
@@ -215,7 +215,7 @@ func TestRemap(t *testing.T) {
 }
 
 func TestNewMemfd(t *testing.T) {
-	mfd0, err := Create("test")
+	mfd0, err := Create()
 	if err != nil {
 		t.Errorf("Create failed: %v", err)
 	}

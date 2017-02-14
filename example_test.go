@@ -7,7 +7,7 @@ import (
 )
 
 func Example() {
-	mfd, err := memfd.Create("example")
+	mfd, err := memfd.Create()
 	if err != nil {
 		panic(err)
 	}
