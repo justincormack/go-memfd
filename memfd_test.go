@@ -165,6 +165,10 @@ func TestMapZero(t *testing.T) {
 	if len(b) != 0 {
 		t.Errorf("Expected zero length map, got %d", len(b))
 	}
+	err := mfd.Unmap()
+	if err != nil {
+		t.Errorf("Unmap error: %v", err)
+	}
 }
 
 func TestRemap(t *testing.T) {

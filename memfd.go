@@ -170,6 +170,9 @@ func (mfd *Memfd) Map() ([]byte, error) {
 // Unmap clears a mapping. Note that Close does not Unmap, it is fine to use the mapping after close,
 // so you should usually defer Close and defer Unmap to avoid leaking resources.
 func (mfd *Memfd) Unmap() error {
+	if cap(mfd.b) == 0 {
+		return nil
+	}
 	err := syscall.Munmap(mfd.b)
 	mfd.b = []byte{}
 	return err
