@@ -24,7 +24,7 @@ import (
 	"os"
 
 	"github.com/justincormack/go-memfd"
-	capnp "zombiezen.com/go/capnproto2"
+	"zombiezen.com/go/capnproto2"
 )
 
 // MemfdArena is the base type, that wraps a memfd
