@@ -239,3 +239,14 @@ func TestNotMemfdNewMemfd(t *testing.T) {
 		t.Errorf("Expected an error calling New with /dev/null")
 	}
 }
+
+func TestCloexec(t *testing.T) {
+	mfd, err := Create()
+	if err != nil {
+		t.Errorf("Create failed: %v", err)
+	}
+	defer mfd.Close()
+	// does not really test it is working at present
+	mfd.SetCloexec()
+	mfd.ClearCloexec()
+}

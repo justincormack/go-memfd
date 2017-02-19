@@ -88,7 +88,13 @@ func (mfd *Memfd) SetSize(size int64) error {
 // if you are not using the Go fork exec which can set this.
 // While this can fail in theory, it only will if the file is closed, so we ignore error.
 func (mfd *Memfd) ClearCloexec() {
-	_ = msyscall.FcntlClearCloexec(mfd.Fd())
+	_ = msyscall.FcntlCloexec(mfd.Fd(), 0)
+}
+
+// SetCloexec sets the Cloexec flag. Useful if you inherited an fd with this clear.
+// While this can fail in theory, it only will if the file is closed, so we ignore error.
+func (mfd *Memfd) SetCloexec() {
+	_ = msyscall.FcntlCloexec(mfd.Fd(), 1)
 }
 
 // seals is an internal function that returns seals or an error

@@ -63,9 +63,9 @@ func FcntlSetSeals(fd uintptr, seals int) (err error) {
 	return
 }
 
-// FcntlClearCloexec clears the cloexec flag, useful just before we exec another process.
-func FcntlClearCloexec(fd uintptr) (err error) {
-	_, _, e1 := syscall.Syscall(SYS_FCNTL, fd, syscall.F_SETFD, 0)
+// FcntlCloexec clears the cloexec flag (0 arg) or sets it (1), useful just before we exec another process.
+func FcntlCloexec(fd uintptr, flag int) (err error) {
+	_, _, e1 := syscall.Syscall(SYS_FCNTL, fd, syscall.F_SETFD, uintptr(flag))
 	if e1 != 0 {
 		err = os.NewSyscallError("fcntl", e1)
 	}

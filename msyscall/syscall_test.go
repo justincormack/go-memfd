@@ -38,9 +38,15 @@ func TestCloexec(t *testing.T) {
 		t.Errorf("MemfdCreate failed: %v", err)
 	}
 	defer syscall.Close(int(fd))
-	err = FcntlClearCloexec(fd)
+	// clear
+	err = FcntlCloexec(fd, 0)
 	if err != nil {
-		t.Errorf("FcntlClearCloexec failed: %v", err)
+		t.Errorf("FcntlCloexec clear failed: %v", err)
+	}
+	// set
+	err = FcntlCloexec(fd, 1)
+	if err != nil {
+		t.Errorf("FcntlCloexec set failed: %v", err)
 	}
 }
 
